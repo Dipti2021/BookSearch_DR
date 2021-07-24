@@ -29,9 +29,9 @@ For this application, Google Books API search engine has been built in MERN Stac
  ## App Presentation
  The web app created can be run either from the server using __localhost:3001__ or through the heroku link. The app via heroku looks something like the images shown
    
-   ![image3](client/public/login.png)
+   ![image3](client/public/slogin.png)
    
-   ![image3](client/public/signup.png)
+   ![image3](client/public/ssignup.png)
      
    ![image3](client/public/search.png)
    
