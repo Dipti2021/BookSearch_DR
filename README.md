@@ -43,7 +43,7 @@ For this application, Google Books API search engine has been built in MERN Stac
 
  ## Deployment
   The app has been deployed on GITHUB, where all the codes are visible, and the working web app has been deployed on heroku
-   * [The URL of the Github repo](https://github.com/Dipti2021/BudgetTracker_DR)
+   * [The URL of the Github repo](https://github.com/Dipti2021/BookSearch_DR)
    *  [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://booksearchdr.herokuapp.com/)
 
 
