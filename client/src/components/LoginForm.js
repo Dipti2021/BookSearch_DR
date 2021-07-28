@@ -14,7 +14,7 @@ const LoginForm = () => {
     setUserFormData({ ...userFormData, [name]: value });
   };
   
-  const [loginUser] = useMutation(LOGIN);
+  const [loginUser, { error }] = useMutation(LOGIN);
   
   const handleFormSubmit = async (event) => {
     event.preventDefault();
@@ -30,6 +30,7 @@ const LoginForm = () => {
       })
       console.log(data);
       Auth.login(data.login.token);
+      
 
     } catch (err) {
       console.error(err);
