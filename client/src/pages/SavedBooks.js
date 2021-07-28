@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, {  useEffect } from 'react';
 import { Jumbotron, Container, CardColumns, Card, Button } from 'react-bootstrap';
 import { useMutation, useQuery } from '@apollo/react-hooks';
 import { REMOVE_BOOK } from '../utils/mutations';
 import { GET_ME } from '../utils/queries';
+
 import Auth from '../utils/auth';
 
-
 const SavedBooks = () => {
- 
   const { loading, data } = useQuery(GET_ME);
   const [removeBook] = useMutation(REMOVE_BOOK);
 
@@ -22,6 +21,7 @@ const SavedBooks = () => {
         if (!token) {
           return false;
         }
+
       } catch (err) {
         console.error(err);
       }
@@ -29,8 +29,6 @@ const SavedBooks = () => {
 
     getUserData();
   }, [userDataLength]);
-
-  
   const handleDeleteBook = async (bookId) => {
     console.log(bookId)
     const token = Auth.loggedIn() ? Auth.getToken() : null;
@@ -43,7 +41,6 @@ const SavedBooks = () => {
       await removeBook({
         variables: { bookId: bookId}
       }) 
-
     } catch (err) {
       console.error(err);
     }

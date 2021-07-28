@@ -7,12 +7,14 @@ import { searchGoogleBooks } from '../utils/API';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 
 const SearchBooks = () => {
-  const [searchedBooks, setSearchedBooks] = useState([])
+
+  const [searchedBooks, setSearchedBooks] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
 
   const [saveBook] = useMutation(SAVE_BOOK);
 
+  
   useEffect(() => {
     return () => saveBookIds(savedBookIds);
   });
@@ -47,8 +49,10 @@ const SearchBooks = () => {
       console.error(err);
     }
   };
-  const handleSaveBook = async (bookId) => {
+
   
+  const handleSaveBook = async (bookId) => {
+    
     const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
@@ -61,6 +65,7 @@ const SearchBooks = () => {
       const { data } = await saveBook({
         variables: {bookData: { ...bookToSave}}
       })
+    
       setSavedBookIds([...savedBookIds, bookToSave.bookId]);
     } catch (err) {
       console.error(err);
