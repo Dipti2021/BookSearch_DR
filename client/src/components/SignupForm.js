@@ -1,119 +1,134 @@
-import React, { useState } from 'react';
-import {useMutation} from '@apollo/react-hooks';
-import {ADD_USER} from '../utils/mutations';
-import { Form, Button, Alert } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Jumbotron, Container, Col, Form, Button, Card, CardColumns } from 'react-bootstrap';
 
-// import { createUser } from '../utils/API';
 import Auth from '../utils/auth';
+import { useMutation } from '@apollo/react-hooks';
+import { SAVE_BOOK } from '../utils/mutations';
 
-const SignupForm = () => {
-  // set initial form state
-  const [userFormData, setUserFormData] = useState({ username: '', email: '', password: '' });
-  // set state for form validation
-  const [validated] = useState(false);
-  // set state for alert
-  const [showAlert, setShowAlert] = useState(false);
-  // set addUser with useMutation
-  const [addUser, { error }] = useMutation(ADD_USER);
+import { searchGoogleBooks } from '../utils/API';
+import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 
+const SearchBooks = () => {
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setUserFormData({ ...userFormData, [name]: value });
-  };
+  const [searchedBooks, setSearchedBooks] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
+  const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
 
+  const [saveBook] = useMutation(SAVE_BOOK);
+  useEffect(() => {
+    return () => saveBookIds(savedBookIds);
+  });
   const handleFormSubmit = async (event) => {
     event.preventDefault();
 
-    // check if form has everything (as per react-bootstrap docs)
-    const form = event.currentTarget;
-    if (form.checkValidity() === false) {
-      event.preventDefault();
-      event.stopPropagation();
+    if (!searchInput) {
+      return false;
     }
 
     try {
-      // const response = await createUser(userFormData);
-      // if (!response.ok) {
-      //   throw new Error('something went wrong!');
-      // }
+      const response = await searchGoogleBooks(searchInput);
 
-      // execute addUser mutation and pass in variable data from form
-      const { data } = await addUser({
-        variables: { ...userFormData }
-      });
-      console.log(data);
-      Auth.login(data.addUser.token);
-      // const { token, user } = await response.json();
-      // Auth.login(token);
+      if (!response.ok) {
+        throw new Error('something went wrong!');
+      }
+      const { items } = await response.json();
+
+      const bookData = items.map((book) => ({
+        bookId: book.id,
+        authors: book.volumeInfo.authors || ['No author to display'],
+        title: book.volumeInfo.title,
+        description: book.volumeInfo.description,
+        image: book.volumeInfo.imageLinks?.thumbnail || '',
+      }));
+
+      setSearchedBooks(bookData);
+      setSearchInput('');
     } catch (err) {
       console.error(err);
-      setShowAlert(true);
+    }
+  };
+
+  const handleSaveBook = async (bookId) => {
+    const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
+    const token = Auth.loggedIn() ? Auth.getToken() : null;
+
+    if (!token) {
+      return false;
     }
 
-    setUserFormData({
-      username: '',
-      email: '',
-      password: '',
-    });
+    try {
+
+      const { data } = await saveBook({
+        variables: {bookData: { ...bookToSave}}
+      })
+      setSavedBookIds([...savedBookIds, bookToSave.bookId]);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
     <>
-      {/* This is needed for the validation functionality above */}
-      <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
-        {/* show alert if server response is bad */}
-        <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant='danger'>
-          Something went wrong with your signup!
-        </Alert>
+      <Jumbotron fluid className='text-light bg-dark'>
+        <Container>
+          <h1>Search for Books!</h1>
+          <Form onSubmit={handleFormSubmit}>
+            <Form.Row>
+              <Col xs={12} md={8}>
+                <Form.Control
+                  name='searchInput'
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  type='text'
+                  size='lg'
+                  placeholder='Search for a book'
+                />
+              </Col>
+              <Col xs={12} md={4}>
+                <Button type='submit' variant='success' size='lg'>
+                  Submit Search
+                </Button>
+              </Col>
+            </Form.Row>
+          </Form>
+        </Container>
+      </Jumbotron>
 
-        <Form.Group>
-          <Form.Label htmlFor='username'>Username</Form.Label>
-          <Form.Control
-            type='text'
-            placeholder='Your username'
-            name='username'
-            onChange={handleInputChange}
-            value={userFormData.username}
-            required
-          />
-          <Form.Control.Feedback type='invalid'>Username is required!</Form.Control.Feedback>
-        </Form.Group>
-
-        <Form.Group>
-          <Form.Label htmlFor='email'>Email</Form.Label>
-          <Form.Control
-            type='email'
-            placeholder='Your email address'
-            name='email'
-            onChange={handleInputChange}
-            value={userFormData.email}
-            required
-          />
-          <Form.Control.Feedback type='invalid'>Email is required!</Form.Control.Feedback>
-        </Form.Group>
-
-        <Form.Group>
-          <Form.Label htmlFor='password'>Password</Form.Label>
-          <Form.Control
-            type='password'
-            placeholder='Your password'
-            name='password'
-            onChange={handleInputChange}
-            value={userFormData.password}
-            required
-          />
-          <Form.Control.Feedback type='invalid'>Password is required!</Form.Control.Feedback>
-        </Form.Group>
-        <Button
-          disabled={!(userFormData.username && userFormData.email && userFormData.password)}
-          type='submit'
-          variant='success'>
-          Submit
-        </Button>
-      </Form>
+      <Container>
+        <h2>
+          {searchedBooks.length
+            ? `Viewing ${searchedBooks.length} results:`
+            : 'Search for a book to begin'}
+        </h2>
+        <CardColumns>
+          {searchedBooks.map((book) => {
+            return (
+              <Card key={book.bookId} border='dark'>
+                {book.image ? (
+                  <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' />
+                ) : null}
+                <Card.Body>
+                  <Card.Title>{book.title}</Card.Title>
+                  <p className='small'>Authors: {book.authors}</p>
+                  <Card.Text>{book.description}</Card.Text>
+                  {Auth.loggedIn() && (
+                    <Button
+                      disabled={savedBookIds?.some((savedBookId) => savedBookId === book.bookId)}
+                      className='btn-block btn-info'
+                      onClick={() => handleSaveBook(book.bookId)}>
+                      {savedBookIds?.some((savedBookId) => savedBookId === book.bookId)
+                        ? 'This book has already been saved!'
+                        : 'Save this Book!'}
+                    </Button>
+                  )}
+                </Card.Body>
+              </Card>
+            );
+          })}
+        </CardColumns>
+      </Container>
     </>
   );
 };
 
-export default SignupForm;
+export default SearchBooks;

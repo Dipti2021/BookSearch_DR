@@ -1,5 +1,6 @@
 const { Schema } = require('mongoose');
 
+
 const bookSchema = new Schema({
   authors: [
     {
@@ -10,7 +11,7 @@ const bookSchema = new Schema({
     type: String,
     required: true,
   },
-  
+
   bookId: {
     type: String,
     required: true,
